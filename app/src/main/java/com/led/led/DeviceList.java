@@ -1,7 +1,7 @@
 package com.led.led;
 
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,14 +19,13 @@ import java.util.ArrayList;
 import java.util.Set;
 
 
-public class DeviceList extends ActionBarActivity
+public class DeviceList extends AppCompatActivity
 {
     //widgets
     Button btnPaired;
     ListView devicelist;
     //Bluetooth
     private BluetoothAdapter myBluetooth = null;
-    private Set<BluetoothDevice> pairedDevices;
     public static String EXTRA_ADDRESS = "device_address";
 
     @Override
@@ -36,8 +35,8 @@ public class DeviceList extends ActionBarActivity
         setContentView(R.layout.activity_device_list);
 
         //Calling widgets
-        btnPaired = (Button)findViewById(R.id.button);
-        devicelist = (ListView)findViewById(R.id.listView);
+        btnPaired = findViewById(R.id.button);
+        devicelist = findViewById(R.id.listView);
 
         //if the device has bluetooth
         myBluetooth = BluetoothAdapter.getDefaultAdapter();
@@ -69,7 +68,7 @@ public class DeviceList extends ActionBarActivity
 
     private void pairedDevicesList()
     {
-        pairedDevices = myBluetooth.getBondedDevices();
+        Set<BluetoothDevice> pairedDevices = myBluetooth.getBondedDevices();
         ArrayList list = new ArrayList();
 
         if (pairedDevices.size()>0)

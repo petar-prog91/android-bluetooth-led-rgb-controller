@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21.1.2"
+    compileSdkVersion 26
+    buildToolsVersion '27.0.3'
 
     defaultConfig {
         applicationId "com.led.led"
-        minSdkVersion 14
-        targetSdkVersion 21
+        minSdkVersion 15
+        targetSdkVersion 26
         versionCode 1
-        versionName "1.0"
+        versionName "1.1.27"
     }
     buildTypes {
         release {
@@ -20,6 +20,7 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:21.0.3'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.github.skydoves:colorpickerview:1.0.8'
 }

@@ -1,6 +1,7 @@
 package com.led.led;
 
-import android.support.v7.app.ActionBarActivity;
+import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -9,23 +10,29 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.os.AsyncTask;
 
+import com.skydoves.colorpickerview.ColorListener;
+import com.skydoves.colorpickerview.ColorPickerView;
+
 import java.io.IOException;
 import java.util.UUID;
 
 
-public class ledControl extends ActionBarActivity {
+public class ledControl extends AppCompatActivity {
 
     Button btnOn, btnOff;
-    SeekBar crvena, zelena, plava;
+    TextView rgbValueText;
+    ColorPickerView colorPickerView;
     String address = null;
-    private ProgressDialog progress;
+    Boolean firstRun = true;
+    ProgressDialog progress;
+
     BluetoothAdapter myBluetooth = null;
     BluetoothSocket btSocket = null;
     private boolean isBtConnected = false;
@@ -44,15 +51,11 @@ public class ledControl extends ActionBarActivity {
         setContentView(R.layout.activity_led_control);
 
         //call the widgets
-        btnOn = (Button)findViewById(R.id.Upali_Button);
-        btnOff = (Button)findViewById(R.id.Ugasi_Button);
-        crvena = (SeekBar)findViewById(R.id.seekBarCrvena);
-        zelena = (SeekBar)findViewById(R.id.seekBarZelena);
-        plava = (SeekBar)findViewById(R.id.seekBarPlava);
+        btnOn = findViewById(R.id.Upali_Button);
+        btnOff = findViewById(R.id.Ugasi_Button);
 
-        crvena.incrementProgressBy(5);
-        plava.incrementProgressBy(5);
-        zelena.incrementProgressBy(5);
+        colorPickerView = findViewById((R.id.colorPickerView));
+        rgbValueText = findViewById((R.id.rgbValues));
 
         new ConnectBT().execute(); //Call the class to connect
 
@@ -74,86 +77,38 @@ public class ledControl extends ActionBarActivity {
             }
         });
 
-        crvena.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        colorPickerView.setColorListener(new ColorListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser==true)
-                {
-                    try
-                    {
-                        btSocket.getOutputStream().write("R_".toString().concat(String.valueOf(progress)).getBytes());
-                    }
-                    catch (IOException e)
-                    {
+            public void onColorSelected(int color) {
+                int[] rgbValue = colorPickerView.getColorRGB();
+                final int redValue = rgbValue[0];
+                final int greenValue = rgbValue[1];
+                final int blueValue = rgbValue[2];
+                final String fullText = String.valueOf(String.format("%03d", redValue)) + String.valueOf(String.format("%03d", greenValue)) + String.valueOf(String.format("%03d", blueValue));
 
+                if (btSocket != null) {
+                    if (firstRun) {
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                firstRun = false;
+                                rgbValueText.setText(String.valueOf(fullText));
+                            }
+                        }, 1000);
+                    } else {
+                        try {
+                            btSocket.getOutputStream().write("RGB_".toString().concat(fullText).getBytes());
+
+                            rgbValueText.setText("RGB_".toString().concat(fullText));
+                        } catch (IOException e) {
+                            msg("Something went wrong when trying to change the color. Please try again or restart the app.");
+                        }
                     }
                 }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
 
             }
         });
 
-        zelena.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser==true)
-                {
-                    try
-                    {
-                        btSocket.getOutputStream().write("G_".toString().concat(String.valueOf(progress)).getBytes());
-                    }
-                    catch (IOException e)
-                    {
-
-                    }
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        plava.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser==true)
-                {
-                    try
-                    {
-                        btSocket.getOutputStream().write("B_".toString().concat(String.valueOf(progress)).getBytes());
-                    }
-                    catch (IOException e)
-                    {
-
-                    }
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
     }
 
     private void turnOffLed()
@@ -221,7 +176,7 @@ public class ledControl extends ActionBarActivity {
         @Override
         protected void onPreExecute()
         {
-            progress = ProgressDialog.show(ledControl.this, "Konektovanje...", "Molimo sacekajte!");  //show a progress dialog
+            progress = ProgressDialog.show(ledControl.this, "Connecting...", "Please wait!");  //show a progress dialog
         }
 
         @Override
@@ -231,11 +186,11 @@ public class ledControl extends ActionBarActivity {
             {
                 if (btSocket == null || !isBtConnected)
                 {
-                 myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-                 BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
-                 btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
-                 BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
-                 btSocket.connect();//start connection
+                    myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
+                    BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
+                    btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
+                    BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
+                    btSocket.connect();//start connection
                 }
             }
             catch (IOException e)
@@ -251,12 +206,12 @@ public class ledControl extends ActionBarActivity {
 
             if (!ConnectSuccess)
             {
-                msg("Konekcija nije uspela. Pokusajte ponovo upariti Bluetooth uredjaje.");
+                msg("Connecting failed. Please try to pair the devices again.");
                 finish();
             }
             else
             {
-                msg("Konektovano.");
+                msg("Connected. Now you can change colors");
                 isBtConnected = true;
             }
             progress.dismiss();

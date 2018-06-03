@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/LED.iml" filepath="$PROJECT_DIR$/LED.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android-bluetooth-led-rgb-controller.iml" filepath="$PROJECT_DIR$/android-bluetooth-led-rgb-controller.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
